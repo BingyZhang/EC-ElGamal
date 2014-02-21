@@ -8,7 +8,12 @@ bash linux64
 
 
 Add
+
 GenPerm [dim]
+
 ProdBallot [n] [l]
+
 Dec [cipher file]
+
 KeyGen
+
