@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	}
 	
 
-	cout << "Generating EC-ElGamal "<<n<<" X "<<n<< " Permutation Matrix...." << endl;
+	//cout << "Generating EC-ElGamal "<<n<<" X "<<n<< " Permutation Matrix...." << endl;
     	a=-3;
     	mip->IOBASE=16;
     	b=ecb;
@@ -102,7 +102,14 @@ int main(int argc, char *argv[])
 	h = ECn(x,iy); //decompress pk
     	//Generate random permutation 
 	plist = Rperm(n);
-	
+	//print plist
+	for(i=0;i<n;i++){
+		cout<<plist[i];
+		if(i<n-1)cout<<",";
+		else cout<<endl;
+	}
+
+
 	//encrypt
 	fout.open(CFILE);
 	for(i = 0;i<n;i++){
