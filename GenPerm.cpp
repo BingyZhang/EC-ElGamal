@@ -10,13 +10,15 @@
 #include "ecn.h"
 #include "big.h"
 #include <ctime>
-#include <random>
+//#include <random>
 
 //using namespace std;
 
 #define  PKFILE "EC_PK.txt"
 #define  SKFILE "EC_SK.txt"
 #define  CFILE "EC_cipher.txt"
+#define  PFILE "EC_plain.txt"
+
 
 /* NIST p192 bit elliptic curve prime 2#192-2#64-1 */
 
@@ -44,6 +46,7 @@ Miracl precision(50,MAXBASE);
 
 
 // It returns a random permutation of 0..n-1
+/*
 int * Rperm(int n) {
     int *a = new int[n];
     int k;
@@ -60,48 +63,62 @@ int * Rperm(int n) {
     }
     return a;
 }
+*/
+
+//fake permutation for debug
+int * ID(int n) {
+    int *a = new int[n];
+    int k;
+    for (k = 0; k < n; k++)
+        a[k] = k;
+    return a;
+}
 
 
 int main(int argc, char *argv[])
 {
-    	int iy,i,j, n=2;
-	int *plist;
-	char *line = new char[512];//buffer needs char instead of const char
-    	ofstream fout;
-    	ifstream fin;
-    	time_t seed;
-    	Big tempB,a,b,p,x,y,r;
-    	ECn g,h,c1,c2,tempE;
-    	miracl *mip=&precision;
+    int iy,i,j, n=2, max = 1000;
+    int *plist;
+    char *line = new char[512];//buffer needs char instead of const char
+    ofstream fout;
+    ofstream pout;
+    ifstream fin;
+    time_t seed;
+    Big tempB,a,b,p,x,y,r;
+    ECn g,h,c1,c2,tempE;
+    miracl *mip=&precision;
 
-    	time(&seed);
-    	irand((long)seed);   /* change parameter for different values */
-    	if(argc ==2){
-		n=atoi(argv[1]);
-	}
+    time(&seed);
+    irand((long)seed);   /* change parameter for different values */
+    if(argc >=2){
+        n=atoi(argv[1]);
+    }
+    
+    if(argc ==3){
+        max=atoi(argv[2]);
+    }
 	
-
 	//cout << "Generating EC-ElGamal "<<n<<" X "<<n<< " Permutation Matrix...." << endl;
-    	a=-3;
-    	mip->IOBASE=16;
-    	b=ecb;
-    	p=ecp;
-    	ecurve(a,b,p,MR_BEST);  // means use PROJECTIVE if possible, else AFFINE coordinates
-    	x=ecx;
-    	y=ecy;
-    	g=ECn(x,y);
+    a=-3;
+    mip->IOBASE=16;
+    b=ecb;
+    p=ecp;
+    ecurve(a,b,p,MR_BEST);  // means use PROJECTIVE if possible, else AFFINE coordinates
+    x=ecx;
+    y=ecy;
+    g=ECn(x,y);
 
-    	//Read PK
-    	mip->IOBASE=64;
-    	fin.open(PKFILE);
-    	fin.getline(line,512);
-        x = line;
-        fin.getline(line,512);
-        iy = atoi(line);
-    	fin.close();
+    //Read PK
+    mip->IOBASE=64;
+    fin.open(PKFILE);
+    fin.getline(line,512);
+    x = line;
+    fin.getline(line,512);
+    iy = atoi(line);
+    fin.close();
 	h = ECn(x,iy); //decompress pk
-    	//Generate random permutation 
-	plist = Rperm(n);
+    //Generate random permutation
+	plist = ID(n);
 	//print plist
 	for(i=0;i<n;i++){
 		cout<<plist[i];
@@ -112,33 +129,30 @@ int main(int argc, char *argv[])
 
 	//encrypt
 	fout.open(CFILE);
+    pout.open(PFILE);
 	for(i = 0;i<n;i++){
-		for(j=0;j<n;j++){
-			if(j == plist[i]){
-				tempB = 1;
-			} 
-			else{
-				tempB = 0;
-			}
-			r=rand(160,2);
-        		c1 = r*g;
-        		c2 = tempB*g;
-        		tempE = r*h;
-        		c2+=tempE; //avoid temp variables
-			iy = c1.get(x);
-        		fout<<x<<endl;
-        		fout<<iy<<endl;
-        		iy = c2.get(x);
-        		fout<<x<<endl;
-        		fout<<iy<<endl;
-		}
+        tempB = max;
+        tempB = pow(tempB,plist[i]);
+        r=rand(160,2);
+        //write the plain and random
+        pout<<tempB<<endl<<r<<endl;
+        c1 = r*g;
+        c2 = tempB*g;
+        tempE = r*h;
+        c2+=tempE; //avoid temp variables
+        iy = c1.get(x);
+        fout<<x<<endl;
+        fout<<iy<<endl;
+        iy = c2.get(x);
+        fout<<x<<endl;
+        fout<<iy<<endl;
 	}
 	fout.close();
+    pout.close();
 
 
-
-        //free buffer
-        delete [] line;
+    //free buffer
+    delete [] line;
 	delete [] plist;
 	return 0;
 }

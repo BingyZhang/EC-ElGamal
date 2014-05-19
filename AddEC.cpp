@@ -18,8 +18,7 @@
 #define  CFILE "EC_cipher.txt"
 #define  TFILE "EC_sum.txt"
 #define  PFILE "EC_plain.txt"
-#define  BFILE "Ballot.txt"
-#define  EBFILE "EC_ballot.txt"
+
 
 /* NIST p192 bit elliptic curve prime 2#192-2#64-1 */
 
@@ -46,25 +45,20 @@ Miracl precision(50,MAXBASE);
 
 int main(int argc, char *argv[])
 {
-    	int m,iy,i,j, n = 2, l = 2;
+    	int iy,i;
 	char *line = new char[512];//buffer needs char instead of const char
     	ofstream fout;
     	ifstream fin;
     	time_t seed;
     	Big tempB,a,b,p,x,y;
-    	ECn g,s1,s2;
+    	ECn g,c1,c2,s1,s2;
     	miracl *mip=&precision;
 
     	time(&seed);
     	irand((long)seed);   /* change parameter for different values */
-	if(argc ==3){
-        n=atoi(argv[1]);
-		l=atoi(argv[2]);
-        }
-	//we need to read all the ciphertexts in
-	ECn *c1 = new ECn[n];
-	ECn *c2 = new ECn[n];
-	cout << "Producing EC-ElGamal Ballots...." << endl;
+	
+
+	cout << "Adding EC-ElGamal ciphertexts...." << endl;
     	a=-3;
     	mip->IOBASE=16;
     	b=ecb;
@@ -74,52 +68,45 @@ int main(int argc, char *argv[])
     	y=ecy;
     	g=ECn(x,y);
 	
-	//Read cipher and ballot transpose
+	//Read cipher and multiply
+	i = 0;
 	mip->IOBASE=64;
         fin.open(CFILE);
-        for(i = 0;i<n;i++){
-                fin.getline(line,512);
-                x = line;
-                fin.getline(line,512);
-                iy = atoi(line);
-                c1[i] = ECn(x,iy); //decompress
-                fin.getline(line,512);
-                x = line;
-                fin.getline(line,512);
-                iy = atoi(line);
-                c2[i] = ECn(x,iy); //decompress
-        }
-	fin.close();
-
-	fin.open(BFILE);
-	fout.open(EBFILE);
-    for(j=0;j<l;j++){
-	for(i = 0;i<n;i++){
-		fin>>m;
-		if(i == 0){
-			s1 = m*c1[i];
-			s2 = m*c2[i];
+	while(fin.getline(line,512)){
+	        x = line;
+	        fin.getline(line,512);
+        	iy = atoi(line);
+       		c1 = ECn(x,iy); //decompress
+        	fin.getline(line,512);
+        	x = line;
+        	fin.getline(line,512);
+        	iy = atoi(line);
+        	c2 = ECn(x,iy); //decompress
+	        //add
+		if(i==0){
+			s1 = c1;
+			s2 = c2;
 		}
 		else{
-			s1 += m*c1[i];
-            s2 += m*c2[i];
+			s1 += c1;
+            s2 += c2;
+
 		}
+		i++;
 	}
-	//write
+        fin.close();
+
+
+
+	fout.open(TFILE);
 	iy = s1.get(x);
-        fout<<x<<endl<<iy<<endl;
-        iy = s2.get(x);
-        fout<<x<<endl<<iy<<endl;
-    }
-    fin.close();
-	fout.close();
-
-
+	fout<<x<<endl<<iy<<endl;
+	iy = s2.get(x);
+    fout<<x<<endl<<iy<<endl;
+    fout.close();
 
 	//free buffer
 	delete [] line;
-	delete [] c1;
-	delete [] c2;
 	return 0;
 }
 

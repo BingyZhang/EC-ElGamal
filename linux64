@@ -70,11 +70,11 @@ g++ -c -m64 -O2 crt.cpp
 g++ -m64 -O2 mersenne.cpp big.o miracl.a -o mersenne
 g++ -m64 -O2 brent.cpp big.o zzn.o miracl.a -o brent
 g++ -c -m64 -O2 flash.cpp
-g++ -m64 -O2 sample.cpp flash.o miracl.a -o sample
+g++ -m64 -O2 AddEC.cpp ecn.o big.o miracl.a -o AddEC
 g++ -m64 -O2 Add.cpp ecn.o big.o miracl.a -o Add
-g++ -m64 -O2 Dec.cpp ecn.o big.o miracl.a -o Dec
+g++ -m64 -O2 Verify.cpp ecn.o big.o miracl.a -o Verify
 g++ -m64 -O2 KeyGen.cpp ecn.o big.o miracl.a -o KeyGen
-g++ -m64 -std=c++11 -O2 GenPerm.cpp ecn.o big.o miracl.a -o GenPerm
+g++ -m64 -O2 GenPerm.cpp ecn.o big.o miracl.a -o GenPerm
 g++ -m64 -O2 ProdBallot.cpp ecn.o big.o miracl.a -o ProdBallot
 g++ -c -m64 -O2 polymod.cpp
 g++ -c -m64 -O2 poly.cpp

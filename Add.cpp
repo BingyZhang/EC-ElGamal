@@ -16,13 +16,17 @@
 #define  PKFILE "EC_PK.txt"
 #define  SKFILE "EC_SK.txt"
 #define  CFILE "EC_cipher.txt"
-#define  TFILE "EC_sum.txt"
+#define  TFILE "EC_decommit.txt"
 #define  PFILE "EC_plain.txt"
 
 
 /* NIST p192 bit elliptic curve prime 2#192-2#64-1 */
 
 char *ecp=(char *)"FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFEFFFFFFFFFFFFFFFF";
+
+/* group order q */
+
+char *ecq=(char *)"FFFFFFFFFFFFFFFFFFFFFFFF99DEF836146BC9B1B4D22831";
 
 /* elliptic curve parameter B */
 
@@ -50,19 +54,20 @@ int main(int argc, char *argv[])
     	ofstream fout;
     	ifstream fin;
     	time_t seed;
-    	Big tempB,a,b,p,x,y;
-    	ECn g,c1,c2,s1,s2;
+    	Big tempB,a,b,p,q,x,y,s1,s2;
+    	ECn g;
     	miracl *mip=&precision;
 
     	time(&seed);
     	irand((long)seed);   /* change parameter for different values */
 	
 
-	cout << "Adding EC-ElGamal ciphertexts...." << endl;
+	//cout << "Adding EC-ElGamal ciphertexts...." << endl;
     	a=-3;
     	mip->IOBASE=16;
     	b=ecb;
     	p=ecp;
+        q=ecq;// order
     	ecurve(a,b,p,MR_BEST);  // means use PROJECTIVE if possible, else AFFINE coordinates
     	x=ecx;
     	y=ecy;
@@ -71,39 +76,25 @@ int main(int argc, char *argv[])
 	//Read cipher and multiply
 	i = 0;
 	mip->IOBASE=64;
-        fin.open(CFILE);
+    fin.open(PFILE);
+    s1 = 0;
+    s2 = 0;
 	while(fin.getline(line,512)){
-	        x = line;
-	        fin.getline(line,512);
-        	iy = atoi(line);
-       		c1 = ECn(x,iy); //decompress
-        	fin.getline(line,512);
-        	x = line;
-        	fin.getline(line,512);
-        	iy = atoi(line);
-        	c2 = ECn(x,iy); //decompress
-	        //add
-		if(i==0){
-			s1 = c1;
-			s2 = c2;
-		}
-		else{
-			s1 += c1;
-                        s2 += c2;
-
-		}
+        x = line;
+        fin.getline(line,512);
+        y = line;
+        //"add" (could not fine add mod)
+        s1 += x;
+        s2 += y;
 		i++;
 	}
-        fin.close();
-
-
-
+    fin.close();
+    // a stupid way to mod q
+    x = 1;
+    s2 = modmult(s2,x,q);
 	fout.open(TFILE);
-	iy = s1.get(x);
-	fout<<x<<endl<<iy<<endl;
-	iy = s2.get(x);
-        fout<<x<<endl<<iy<<endl;
-        fout.close();
+	fout<<s1<<endl<<s2<<endl;
+    fout.close();
 
 	//free buffer
 	delete [] line;
